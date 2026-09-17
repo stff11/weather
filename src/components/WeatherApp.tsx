@@ -61,7 +61,7 @@ export function WeatherApp() {
         admin1: loc.admin1 ?? "",
         country: loc.country ?? "",
       });
-      const res = await fetch(`/api/weather?${params.toString()}`);
+      const res = await fetch(`/api/weather?${params.toString()}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Couldn't load the forecast for this location.");
       const data: WeatherResponse = await res.json();
       setWeather(data);

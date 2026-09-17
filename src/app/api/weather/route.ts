@@ -230,7 +230,13 @@ export async function GET(req: NextRequest) {
     };
 
     return NextResponse.json(payload, {
-      headers: { "Cache-Control": "public, max-age=300, stale-while-revalidate=600" },
+      // Intentionally NOT publicly/CDN-cacheable — this endpoint's response
+      // varies entirely by lat/lon query params. A shared cache here (as
+      // "public, max-age=300" previously was) risks serving one location's
+      // forecast back for every other location, exactly like the earlier
+      // /api/geocode bug. The upstream Open-Meteo fetches below already have
+      // their own server-side, correctly-keyed caching for efficiency.
+      headers: { "Cache-Control": "no-store" },
     });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message ?? "Failed to fetch weather" }, { status: 502 });
