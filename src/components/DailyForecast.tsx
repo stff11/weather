@@ -33,7 +33,11 @@ export function DailyForecast({ daily }: { daily: DailyPoint[] }) {
               key={d.date}
               className="grid grid-cols-[64px_36px_1fr_auto] items-center gap-3 px-4 py-3.5 text-ink-900 dark:text-white sm:grid-cols-[110px_36px_1fr_auto] sm:gap-4 sm:px-5"
             >
-              <span className="text-[15px] font-medium">{i === 0 ? "Today" : formatWeekday(d.date, { short: true })}</span>
+              <span className="text-[15px] font-medium">
+                {i === 0
+                  ? `Today ${new Date(d.date).getDate()}`
+                  : `${formatWeekday(d.date, { short: true })} ${new Date(d.date).getDate()}`}
+              </span>
 
               <WeatherIcon code={d.weatherCode} isDay className="h-6 w-6 justify-self-center" />
 
