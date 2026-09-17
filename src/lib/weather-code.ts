@@ -57,7 +57,11 @@ const CODE_MAP: Record<number, WeatherCodeInfo> = {
 
 export function describeWeatherCode(code: number | null | undefined): WeatherCodeInfo {
   if (code == null || !(code in CODE_MAP)) {
-    return { label: "—", state: "clear", precipitation: "none" };
+    // Defaulting an unrecognized/missing code to "clear sky" was itself part
+    // of a real bug: it silently rendered as false sunshine. A neutral,
+    // slightly-cloudy default is a safer failure mode than implying it's
+    // sunny when we simply don't know.
+    return { label: "—", state: "cloudy", precipitation: "none" };
   }
   return CODE_MAP[code];
 }

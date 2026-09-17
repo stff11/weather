@@ -19,6 +19,7 @@ export function SearchBar({
   const [searching, setSearching] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
@@ -33,20 +34,30 @@ export function SearchBar({
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (query.trim().length < 2) {
+      requestIdRef.current++; // invalidate any in-flight request for a longer query
       setResults([]);
       return;
     }
     setSearching(true);
     debounceRef.current = setTimeout(async () => {
+      // Tag this request with an id, and only ever apply the response if it's
+      // still the most recent one fired. Without this, a request for an
+      // earlier, shorter query can resolve *after* a newer one (ordinary
+      // network timing variance) and silently overwrite its results with
+      // stale data — the classic autocomplete race condition.
+      const thisRequestId = ++requestIdRef.current;
       try {
-        const res = await fetch(`/api/geocode?q=${encodeURIComponent(query.trim())}`);
+        const res = await fetch(`/api/geocode?q=${encodeURIComponent(query.trim())}`, {
+          cache: "no-store",
+        });
         const data = await res.json();
+        if (thisRequestId !== requestIdRef.current) return; // superseded — ignore
         setResults(data.results ?? []);
         setOpen(true);
       } catch {
-        setResults([]);
+        if (thisRequestId === requestIdRef.current) setResults([]);
       } finally {
-        setSearching(false);
+        if (thisRequestId === requestIdRef.current) setSearching(false);
       }
     }, 300);
     return () => {

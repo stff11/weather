@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ensembleMean, ensembleMinMax, round } from "@/lib/ensemble";
+import { ensembleMean, ensembleMinMax, ensembleMode, round } from "@/lib/ensemble";
 import { deriveDaytimeCondition, groupHourlyByLocalDate } from "@/lib/daytime-condition";
 import type { WeatherResponse, HourlyPoint, DailyPoint, CurrentConditions } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const ENSEMBLE_HOURLY = [
@@ -99,7 +100,7 @@ export async function GET(req: NextRequest) {
     const windSpeed = ensembleMean(ensemble.hourly, "wind_speed_10m", len);
     const windDir = ensembleMean(ensemble.hourly, "wind_direction_10m", len);
     const pressure = ensembleMean(ensemble.hourly, "pressure_msl", len);
-    const weatherCode = ensembleMean(ensemble.hourly, "weather_code", len);
+    const weatherCode = ensembleMode(ensemble.hourly, "weather_code", len);
     const isDay = ensembleMean(ensemble.hourly, "is_day", len);
 
     const sTime: string[] = supplement.hourly.time;
@@ -125,7 +126,7 @@ export async function GET(req: NextRequest) {
       windDirection: round(windDir[i]),
       windGusts: round(windGusts[i], 1),
       pressure: round(pressure[i]),
-      weatherCode: weatherCode[i] != null ? Math.round(weatherCode[i] as number) : null,
+      weatherCode: weatherCode[i],
       isDay: (isDay[i] ?? 1) >= 0.5,
       temperatureSpread:
         tempMin[i] != null && tempMax[i] != null ? [round(tempMin[i], 1)!, round(tempMax[i], 1)!] : null,

@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const lat = searchParams.get("lat");
@@ -15,13 +18,19 @@ export async function GET(req: NextRequest) {
     if (!res.ok) throw new Error(`Reverse geocoding upstream error ${res.status}`);
     const data = await res.json();
     const name = data.city || data.locality || data.principalSubdivision || "Your location";
-    return NextResponse.json({
-      name,
-      admin1: data.principalSubdivision ?? undefined,
-      country: data.countryName ?? "",
-    });
+    return NextResponse.json(
+      {
+        name,
+        admin1: data.principalSubdivision ?? undefined,
+        country: data.countryName ?? "",
+      },
+      { headers: { "Cache-Control": "no-store" } }
+    );
   } catch (err: any) {
     // Fall back to a generic label rather than failing the whole geolocation flow.
-    return NextResponse.json({ name: "Your location", admin1: undefined, country: "" });
+    return NextResponse.json(
+      { name: "Your location", admin1: undefined, country: "" },
+      { headers: { "Cache-Control": "no-store" } }
+    );
   }
 }
